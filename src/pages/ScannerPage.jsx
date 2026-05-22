@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MdQrCodeScanner, MdSettings, MdClose, MdList } from 'react-icons/md';
 import { QrScanner } from '../components/QrScanner';
 
-export function ScannerPage({ scans, onScanSuccess, gasUrl, onGasUrlChange }) {
+export function ScannerPage({ scans, onScanSuccess, gasUrl, onGasUrlChange, scannerTitle, onScannerTitleChange }) {
   const [showSettings, setShowSettings] = useState(false);
   const navigate = useNavigate();
 
@@ -24,6 +24,17 @@ export function ScannerPage({ scans, onScanSuccess, gasUrl, onGasUrlChange }) {
       <main className="main-content" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         {showSettings && (
           <div className="settings-panel">
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label htmlFor="scannerTitle">スキャナー画面の見出し</label>
+              <input
+                id="scannerTitle"
+                type="text"
+                className="form-input"
+                placeholder="例: QRコード読み取り"
+                value={scannerTitle}
+                onChange={(e) => onScannerTitleChange(e.target.value)}
+              />
+            </div>
             <div className="form-group">
               <label htmlFor="gasUrl">Google Apps Script Web App URL</label>
               <input
@@ -43,7 +54,7 @@ export function ScannerPage({ scans, onScanSuccess, gasUrl, onGasUrlChange }) {
 
         <section className="scanner-section" style={{ flexGrow: 1 }}>
           <div className="scanner-header">
-            <h2>ひよどり山中学校・受付</h2>
+            <h2>{scannerTitle}</h2>
             <span className="badge">スキャン中</span>
           </div>
           <QrScanner onScanSuccess={onScanSuccess} isPaused={false} />

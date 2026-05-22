@@ -6,15 +6,24 @@ import { ListPage } from './pages/ListPage';
 function App() {
   const [scans, setScans] = useState([]);
   const [gasUrl, setGasUrl] = useState('');
+  const [scannerTitle, setScannerTitle] = useState('QRコード読み取り');
 
   useEffect(() => {
     const savedUrl = localStorage.getItem('gasUrl');
     if (savedUrl) setGasUrl(savedUrl);
+    
+    const savedTitle = localStorage.getItem('scannerTitle');
+    if (savedTitle) setScannerTitle(savedTitle);
   }, []);
 
   const handleGasUrlChange = (url) => {
     setGasUrl(url);
     localStorage.setItem('gasUrl', url);
+  };
+
+  const handleScannerTitleChange = (title) => {
+    setScannerTitle(title);
+    localStorage.setItem('scannerTitle', title);
   };
 
   const handleScanSuccess = useCallback((decodedText) => {
@@ -75,6 +84,8 @@ function App() {
             onScanSuccess={handleScanSuccess}
             gasUrl={gasUrl}
             onGasUrlChange={handleGasUrlChange}
+            scannerTitle={scannerTitle}
+            onScannerTitleChange={handleScannerTitleChange}
           />
         } 
       />

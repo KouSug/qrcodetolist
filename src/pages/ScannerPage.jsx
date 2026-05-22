@@ -35,6 +35,7 @@ export function ScannerPage({ scans, onScanSuccess, gasUrl, onGasUrlChange, scan
                 onChange={(e) => onScannerTitleChange(e.target.value)}
               />
             </div>
+            {/* GAS連携機能はいったん見送りのため非表示
             <div className="form-group">
               <label htmlFor="gasUrl">Google Apps Script Web App URL</label>
               <input
@@ -49,6 +50,7 @@ export function ScannerPage({ scans, onScanSuccess, gasUrl, onGasUrlChange, scan
                 送信先のスプレッドシート連携用URLを入力してください。
               </small>
             </div>
+            */}
           </div>
         )}
 

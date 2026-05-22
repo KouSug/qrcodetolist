@@ -1,0 +1,22 @@
+# QRコード連続読み取り＆スプレッドシート連携Webアプリ
+
+## プロジェクト概要
+PCやスマートフォンのカメラを利用してQRコードを連続で読み取り、その結果をリスト化してGoogleスプレッドシートへ出力するWebアプリケーション。
+
+## 技術スタック
+- **Frontend Framework**: React (Vite) / JavaScript (JSX)
+- **Styling**: Vanilla CSS (`src/index.css` にてグローバルな変数とスタイルを管理、ダークモード対応)
+- **QR Code Scanner**: `html5-qrcode`
+- **Icons**: `react-icons`
+- **Backend Integration**: Google Apps Script (GAS) へのWebhook POST連携
+
+## コーディング規約・ルール
+1. **コンポーネント構成**: コンポーネントは責務ごとに分割し、可読性と保守性を高める（例: `QrScanner.jsx` と `App.jsx`）。
+2. **言語**: Viteの標準構成に従い、TypeScriptではなく **JavaScript (JSX)** を使用する。
+3. **スタイリング**: TailwindCSSなどのユーティリティファーストCSSフレームワークは使用せず、**Vanilla CSS** を使用してモダンでリッチなUI（影、角丸、トランジションなど）を実装する。
+4. **状態管理**: Reactの標準Hooks (`useState`, `useEffect`, `useCallback`, `useRef`) を使用する。
+
+## アプリケーションの主な仕様・振る舞い
+- **連続読み取りの重複排除**: 同じQRコードを一瞬で複数回読み取ってしまうのを防ぐため、直前に読み取ったデータと一致する場合は一定時間（2000ms程度）無視するロジックを組み込む。
+- **データ送信**: スプレッドシート（GASエンドポイント）への送信は `fetch` を用いて `method: 'POST'`, `mode: 'no-cors'` で行う。データはJSON文字列で送る。
+- **設定の永続化**: ユーザーが入力したGASのURLは `localStorage` に保存し、次回アクセス時に自動で復元する。

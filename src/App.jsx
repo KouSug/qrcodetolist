@@ -20,9 +20,10 @@ function App() {
   const handleScanSuccess = useCallback((decodedText) => {
     setScans(prev => {
       const now = Date.now();
-      const isDuplicate = prev.length > 0 && 
-                          prev[0].text === decodedText && 
-                          (now - prev[0].timestamp) < 2000;
+      const lastScan = prev.length > 0 ? prev[prev.length - 1] : null;
+      const isDuplicate = lastScan && 
+                          lastScan.text === decodedText && 
+                          (now - lastScan.timestamp) < 2000;
       
       if (isDuplicate) return prev;
 
@@ -50,11 +51,11 @@ function App() {
         console.error('Audio play failed', e);
       }
 
-      return [{
+      return [...prev, {
         id: crypto.randomUUID(),
         text: decodedText,
         timestamp: now
-      }, ...prev];
+      }];
     });
   }, []);
 

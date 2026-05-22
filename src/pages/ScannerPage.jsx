@@ -10,7 +10,7 @@ export function ScannerPage({ scans, onScanSuccess, gasUrl, onGasUrlChange }) {
   return (
     <div className="app-container">
       <header className="header">
-        <h1><MdQrCodeScanner /> Scanner</h1>
+        <h1><MdQrCodeScanner /> QR Code Scanner</h1>
         <button 
           className="btn-icon" 
           onClick={() => setShowSettings(!showSettings)}
@@ -43,7 +43,7 @@ export function ScannerPage({ scans, onScanSuccess, gasUrl, onGasUrlChange }) {
 
         <section className="scanner-section" style={{ flexGrow: 1 }}>
           <div className="scanner-header">
-            <h2>QR読み取り</h2>
+            <h2>ひよどり山中学校・受付</h2>
             <span className="badge">スキャン中</span>
           </div>
           <QrScanner onScanSuccess={onScanSuccess} isPaused={false} />

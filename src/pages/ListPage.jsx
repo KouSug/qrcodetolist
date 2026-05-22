@@ -14,7 +14,7 @@ export function ListPage({ scans, onDelete, gasUrl, onClearScans }) {
     }
   }, [status]);
 
-  const formattedText = scans.map(s => `${new Date(s.timestamp).toLocaleString()}\t\t\t\t\t${s.text}`).join('\n');
+  const formattedText = scans.map(s => `${new Date(s.timestamp).toLocaleString()}\t${s.text}`).join('\n');
 
   const handleCopy = () => {
     if (navigator.clipboard && window.isSecureContext) {

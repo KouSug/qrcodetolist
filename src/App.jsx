@@ -1,28 +1,18 @@
 import { useState, useCallback, useEffect } from 'react';
-import { MdQrCodeScanner, MdDelete, MdSend, MdSettings, MdClose } from 'react-icons/md';
-import { QrScanner } from './components/QrScanner';
+import { Routes, Route } from 'react-router-dom';
+import { ScannerPage } from './pages/ScannerPage';
+import { ListPage } from './pages/ListPage';
 
 function App() {
   const [scans, setScans] = useState([]);
-  const [isPaused, setIsPaused] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [gasUrl, setGasUrl] = useState('');
-  const [status, setStatus] = useState(null);
 
   useEffect(() => {
     const savedUrl = localStorage.getItem('gasUrl');
     if (savedUrl) setGasUrl(savedUrl);
   }, []);
 
-  useEffect(() => {
-    if (status) {
-      const timer = setTimeout(() => setStatus(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [status]);
-
-  const handleGasUrlChange = (e) => {
-    const url = e.target.value;
+  const handleGasUrlChange = (url) => {
     setGasUrl(url);
     localStorage.setItem('gasUrl', url);
   };
@@ -37,9 +27,28 @@ function App() {
       if (isDuplicate) return prev;
 
       try {
-        const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
-        audio.play().catch(() => {});
-      } catch (e) {}
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          const ctx = new AudioContext();
+          const osc = ctx.createOscillator();
+          const gainNode = ctx.createGain();
+          
+          osc.connect(gainNode);
+          gainNode.connect(ctx.destination);
+          
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, ctx.currentTime);
+          
+          gainNode.gain.setValueAtTime(0, ctx.currentTime);
+          gainNode.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.02);
+          gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.1);
+          
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.1);
+        }
+      } catch (e) {
+        console.error('Audio play failed', e);
+      }
 
       return [{
         id: crypto.randomUUID(),
@@ -53,139 +62,33 @@ function App() {
     setScans(prev => prev.filter(scan => scan.id !== id));
   };
 
-  const handleSend = async () => {
-    if (!gasUrl) {
-      setStatus({ type: 'error', message: '設定からGASのURLを入力してください。' });
-      setShowSettings(true);
-      return;
-    }
-
-    if (scans.length === 0) {
-      setStatus({ type: 'error', message: '送信するデータがありません。' });
-      return;
-    }
-
-    try {
-      setStatus({ type: 'success', message: '送信中...' });
-      setIsPaused(true);
-
-      const payload = scans.map(s => ({
-        text: s.text,
-        date: new Date(s.timestamp).toLocaleString()
-      }));
-
-      await fetch(gasUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
-
-      setStatus({ type: 'success', message: '送信完了しました！' });
-      setScans([]);
-    } catch (error) {
-      console.error('Send error:', error);
-      setStatus({ type: 'error', message: '送信に失敗しました。URLを確認してください。' });
-    } finally {
-      setIsPaused(false);
-    }
-  };
+  const clearScans = () => setScans([]);
 
   return (
-    <div className="app-container">
-      <header className="header">
-        <h1><MdQrCodeScanner /> QR Code Scanner</h1>
-        <button 
-          className="btn-icon" 
-          onClick={() => setShowSettings(!showSettings)}
-          style={{ position: 'absolute', right: '1rem' }}
-          aria-label="設定"
-        >
-          {showSettings ? <MdClose size={24} /> : <MdSettings size={24} />}
-        </button>
-      </header>
-
-      <main className="main-content">
-        {showSettings && (
-          <div className="settings-panel">
-            <div className="form-group">
-              <label htmlFor="gasUrl">Google Apps Script Web App URL</label>
-              <input
-                id="gasUrl"
-                type="url"
-                className="form-input"
-                placeholder="https://script.google.com/macros/s/..."
-                value={gasUrl}
-                onChange={handleGasUrlChange}
-              />
-              <small style={{ color: 'var(--text-secondary)' }}>
-                送信先のスプレッドシート連携用URLを入力してください。
-              </small>
-            </div>
-          </div>
-        )}
-
-        <section className="scanner-section">
-          <div className="scanner-header">
-            <h2>スキャナー</h2>
-            <span className="badge">{isPaused ? '一時停止中' : 'スキャン中'}</span>
-          </div>
-          <QrScanner onScanSuccess={handleScanSuccess} isPaused={isPaused} />
-        </section>
-
-        <section className="list-section">
-          <div className="list-header">
-            <h2>読み取りリスト</h2>
-            <span className="badge">{scans.length} 件</span>
-          </div>
-
-          {scans.length === 0 ? (
-            <div className="empty-state">
-              <MdQrCodeScanner size={48} style={{ opacity: 0.5 }} />
-              <p>QRコードを読み取ると<br/>ここに追加されます</p>
-            </div>
-          ) : (
-            <ul className="scan-list">
-              {scans.map((scan) => (
-                <li key={scan.id} className="scan-item">
-                  <div className="scan-content">
-                    <span className="scan-text">{scan.text}</span>
-                    <span className="scan-time">
-                      {new Date(scan.timestamp).toLocaleTimeString()}
-                    </span>
-                  </div>
-                  <button 
-                    className="delete-btn" 
-                    onClick={() => handleDelete(scan.id)}
-                    aria-label="削除"
-                  >
-                    <MdDelete size={20} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <div className="action-section">
-            <button 
-              className="btn btn-primary" 
-              onClick={handleSend}
-              disabled={scans.length === 0}
-            >
-              <MdSend size={20} />
-              スプレッドシートへ送信
-            </button>
-            {status && (
-              <div className={`status-message status-${status.type}`}>
-                {status.message}
-              </div>
-            )}
-          </div>
-        </section>
-      </main>
-    </div>
+    <Routes>
+      <Route 
+        path="/" 
+        element={
+          <ScannerPage 
+            scans={scans} 
+            onScanSuccess={handleScanSuccess}
+            gasUrl={gasUrl}
+            onGasUrlChange={handleGasUrlChange}
+          />
+        } 
+      />
+      <Route 
+        path="/list" 
+        element={
+          <ListPage 
+            scans={scans} 
+            onDelete={handleDelete}
+            gasUrl={gasUrl}
+            onClearScans={clearScans}
+          />
+        } 
+      />
+    </Routes>
   );
 }
 

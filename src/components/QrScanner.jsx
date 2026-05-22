@@ -5,16 +5,31 @@ export const QrScanner = ({ onScanSuccess, isPaused }) => {
   const [error, setError] = useState(null);
   const scannerRef = useRef(null);
   const isComponentMounted = useRef(true);
-  const qrcodeRegionId = "html5qr-code-full-region";
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    isComponentMounted.current = true;
-    const html5QrCode = new Html5Qrcode(qrcodeRegionId);
+    let isActive = true;
+
+    if (!containerRef.current) return;
+    
+    // 強制的にコンテナの中身をクリアする（以前の不要なDOMが残っている場合への備え）
+    containerRef.current.innerHTML = '';
+
+    const scanRegion = document.createElement("div");
+    const uniqueId = `qr-${Math.random().toString(36).substring(2, 10)}`;
+    scanRegion.id = uniqueId;
+    scanRegion.style.width = "100%";
+    scanRegion.style.minHeight = "250px";
+    containerRef.current.appendChild(scanRegion);
+
+    const html5QrCode = new Html5Qrcode(uniqueId);
     scannerRef.current = html5QrCode;
 
     const startScanner = async () => {
       try {
         const hasCamera = await Html5Qrcode.getCameras();
+        if (!isActive) return;
+
         if (hasCamera && hasCamera.length > 0) {
           await html5QrCode.start(
             { facingMode: "environment" },
@@ -24,7 +39,7 @@ export const QrScanner = ({ onScanSuccess, isPaused }) => {
               formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
             },
             (decodedText) => {
-              if (isComponentMounted.current) {
+              if (isActive) {
                 onScanSuccess(decodedText);
               }
             },
@@ -32,12 +47,18 @@ export const QrScanner = ({ onScanSuccess, isPaused }) => {
               // スキャン中コールバック
             }
           );
+
+          if (!isActive) {
+            if (html5QrCode.isScanning) {
+              await html5QrCode.stop().catch(console.error);
+            }
+          }
         } else {
           setError("カメラが見つかりません。");
         }
       } catch (err) {
         console.error("Scanner Error:", err);
-        if (isComponentMounted.current) {
+        if (isActive) {
           setError("カメラの起動に失敗しました。権限が許可されているか確認してください。");
         }
       }
@@ -46,9 +67,12 @@ export const QrScanner = ({ onScanSuccess, isPaused }) => {
     startScanner();
 
     return () => {
-      isComponentMounted.current = false;
+      isActive = false;
       if (scannerRef.current && scannerRef.current.isScanning) {
         scannerRef.current.stop().catch(console.error);
+      }
+      if (containerRef.current && scanRegion.parentNode === containerRef.current) {
+        containerRef.current.removeChild(scanRegion);
       }
     };
   }, [onScanSuccess]);
@@ -82,7 +106,7 @@ export const QrScanner = ({ onScanSuccess, isPaused }) => {
           {error}
         </div>
       )}
-      <div id={qrcodeRegionId} style={{ width: '100%', minHeight: '250px' }} />
+      <div ref={containerRef} />
     </div>
   );
 };
